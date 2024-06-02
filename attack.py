@@ -1,7 +1,8 @@
 import base64
 import binascii
-import argparse
 import urllib.parse
+import os
+import codecs
 
 def detect_encoding(encoded_content):
     # Check for Base64
@@ -40,13 +41,13 @@ def decode_content(encoded_content, encoding_type):
     elif encoding_type == 'url':
         decoded_bytes = urllib.parse.unquote(encoded_content).encode('utf-8')
     elif encoding_type == 'rot13':
-        decoded_bytes = encoded_content.encode('rot_13')
+        decoded_bytes = codecs.decode(encoded_content, 'rot_13').encode('utf-8')
     else:
         raise ValueError("Unsupported encoding type")
     
     return decoded_bytes.decode('utf-8')
 
-def decode_file(input_file_path, output_file_path):
+def decode_file(input_file_path):
     with open(input_file_path, 'r') as input_file:
         encoded_content = input_file.read().strip()
     
@@ -57,6 +58,7 @@ def decode_file(input_file_path, output_file_path):
     
     decoded_content = decode_content(encoded_content, encoding_type)
     
+    output_file_path = os.path.splitext(input_file_path)[0] + '_decoded.txt'
     with open(output_file_path, 'w') as output_file:
         output_file.write(decoded_content)
     
@@ -64,9 +66,18 @@ def decode_file(input_file_path, output_file_path):
     print(f"Decoded content written to file: {output_file_path}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Decode an encoded file")
-    parser.add_argument("input_file", help="Path to the input encoded file")
-    parser.add_argument("output_file", help="Path to the output decoded file")
-    args = parser.parse_args()
+    import tkinter as tk
+    from tkinter import filedialog
 
-    decode_file(args.input_file, args.output_file)
+    root = tk.Tk()
+    root.withdraw()  # Hide the root window
+
+    input_file_path = filedialog.askopenfilename(title="Select the encoded file")
+    
+    if input_file_path:
+        try:
+            decode_file(input_file_path)
+        except Exception as e:
+            print(f"An error occurred: {e}")
+    else:
+        print("No file selected")
